@@ -1,16 +1,62 @@
-import { View, Text, Image, StyleSheet} from 'react-native';
+import { View, Text, Image, StyleSheet, Button, Platform, TouchableOpacity} from 'react-native';
 import Colors from '../services/colors';
-import {useNavigation} from 'expo-router';
-import { useEffect } from 'react';
+import {useNavigation, useRouter} from 'expo-router';
+import React, {useCallback, useEffect} from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+import {useSSO} from '@clerk/clerk-expo';
+
+export const useWarmUpBrowser = () => {
+  React.useEffect(() => {
+    if (Platform.OS !== 'android') return
+    void WebBrowser.warmUpAsync()
+    return () => {
+      void WebBrowser.coolDownAsync()
+    }
+  }, [])
+}
+
+
+
 
   export default function Index() {
+    useWarmUpBrowser()
+    const { startSSOFlow } = useSSO()
     const navigation = useNavigation();
+    const router = useRouter();
 
     useEffect(() => {
       navigation.setOptions({
         headerShown: false
     })
   }, []);
+
+  const onPress = useCallback(async () => {
+    try{
+      const {createdSessionId, setActive, signIn, signUp} = await startSSOFlow({
+        strategy: 'oauth_google',
+        redirectUrl: AuthSession.makeRedirectUri()
+      })
+
+      if(createdSessionId) {
+        setActive!({session: createdSessionId,
+          navigate: async ({session}) =>{
+            if (session?.currentTask){
+              console.log(session.currentTask)
+              router.push('/')
+              return;
+          }
+
+          router.push('/')
+        }
+        })
+      } else {
+        console.log('No session created')
+      }
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2))
+    }
+  },[])
     return (
       <View
       style={{backgroundColor: Colors.PRIMARY,
@@ -38,7 +84,9 @@ import { useEffect } from 'react';
             textAlign: 'center'
           }}>Discover thousands of ...</Text>
 
-          <View style={[styles.button, {
+          <TouchableOpacity 
+          onPress={onPress}
+          style={[styles.button, {
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'center',
@@ -52,7 +100,7 @@ import { useEffect } from 'react';
               fontSize: 20,
               textAlign: 'center'
             }}>Sign in with Google</Text>
-          </View>
+          </TouchableOpacity>
 
           <View style={[styles.button,{backgroundColor: Colors.PRIMARY, borderColor: Colors.PRIMARY}]}>
             <Text style={{
