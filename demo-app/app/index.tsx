@@ -1,7 +1,16 @@
 import { View, Text, Image, StyleSheet} from 'react-native';
 import Colors from '../services/colors';
+import {useNavigation} from 'expo-router';
+import { useEffect } from 'react';
 
   export default function Index() {
+    const navigation = useNavigation();
+
+    useEffect(() => {
+      navigation.setOptions({
+        headerShown: false
+    })
+  }, []);
     return (
       <View
       style={{backgroundColor: Colors.PRIMARY,
@@ -29,7 +38,15 @@ import Colors from '../services/colors';
             textAlign: 'center'
           }}>Discover thousands of ...</Text>
 
-          <View style={styles.button}>
+          <View style={[styles.button, {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 3
+           }]}>
+            <Image source={require('../assets/images/google.jpg')}
+            style={{width: 30, height: 30}}/>
             <Text style={{
               fontFamily: 'appFont',
               fontSize: 20,
